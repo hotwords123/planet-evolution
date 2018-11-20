@@ -7,6 +7,7 @@ var UI = Object.assign(new EventEmitter(), {
 
     mouseClick: false,
     mouseDrag: false,
+    mouseMoved: false,
     mouseButton: null,
     mouseX: null,
     mouseY: null,
@@ -62,8 +63,6 @@ var UI = Object.assign(new EventEmitter(), {
                 var planet = Simulator.planetFromPos(x, y);
                 if (planet) {
                     this.selectedPlanet = planet;
-                } else {
-                    this.selectedPlanet = null;
                 }
             } else {
                 if (this.selectedPlanet) {
@@ -75,8 +74,14 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('mouseup', function() {
+            var x = this.worldX, y = this.worldY;
             if (this.mouseButton === 'l') {
-                //
+                if (!this.mouseMoved) {
+                    var planet = Simulator.planetFromPos(x, y);
+                    if (!planet) {
+                        this.selectedPlanet = null;
+                    }
+                }
             } else {
                 //
             }
@@ -206,6 +211,7 @@ var UI = Object.assign(new EventEmitter(), {
         this.$canvas.mousedown(function(evt) {
             var e = window.event || evt;
             UI.mouseClick = true;
+            UI.mouseMoved = false;
             UI.mouseButton = e.button === 0 ? 'l' : 'r';
             UI.calcMouse(e);
             UI.emit('mousedown', e);
@@ -218,11 +224,13 @@ var UI = Object.assign(new EventEmitter(), {
             UI.calcMouse(e);
             UI.emit('mouseup', e);
             UI.mouseButton = null;
+            UI.mouseMoved = false;
         });
         this.$canvas.mousemove(function(evt) {
             var e = window.event || evt;
             UI.calcMouse(e, true);
             if (UI.mouseClick) {
+                UI.mouseMoved = true;
                 UI.emit('mousedrag', e);
             } else {
                 UI.emit('mousemove', e);
