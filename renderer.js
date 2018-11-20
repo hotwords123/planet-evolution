@@ -48,6 +48,7 @@ class Renderer extends EventEmitter {
             ctx.strokeStyle = '#9df';
             ctx.shadowBlur = 0;
             if (!arr.length) return;
+            ctx.beginPath();
             ctx.moveTo(arr[0].x, arr[0].y);
             for (var i = 1; i < arr.length; ++i) {
                 ctx.lineTo(arr[i].x, arr[i].y);
