@@ -2,7 +2,7 @@
 var Simulator = {
 
     G: 2,
-    MAX_DIST: 10000,
+    MAX_DIST: 50000,
 
     lastTime: null,
     interval: null,
@@ -26,6 +26,10 @@ var Simulator = {
         if (index !== -1) {
             this.removePlanetAt(index);
         }
+    },
+
+    removePlanetAt(index) {
+        var planet = this.planets.splice(index, 1)[0];
         if (planet === UI.selectedPlanet) {
             UI.selectedPlanet = null;
         }
@@ -41,10 +45,6 @@ var Simulator = {
             UI.watchedPlanets.splice(index, 1);
             UI.watchedOrbit.splice(index, 1);
         }
-    },
-
-    removePlanetAt(index) {
-        this.planets.splice(index, 1);
     },
 
     clearPlanets(obj) {
@@ -76,8 +76,20 @@ var Simulator = {
             if (UI.lockedPlanets.indexOf(A) !== -1) {
                 A.v.clear(); continue;
             }
+            A.a = A.F.divide(A.mass);
             A.pos.plus_eq(A.v.plus(A.a.multiply(0.5 * t)).multiply(t));
             A.v.plus_eq(A.a.multiply(t));
+        }
+    },
+
+    tick() {
+        var timePassed = 0.001 * (Date.now() - this.lastTime);
+        this.lastTime = Date.now();
+        if (UI.mouseClick && UI.hitPlanet) return;
+        var count = 10;
+        var elapse = timePassed / count;
+        while (count--) {
+            this.simulate(elapse);
         }
         for (var i = 0; i < this.planets.length; ) {
             if (new Vector(this.planets[i].pos, renderer.centerPos).length > this.MAX_DIST) {
@@ -93,17 +105,6 @@ var Simulator = {
                 if (arr.length > 2000) arr.shift();
             }
         });
-    },
-
-    tick() {
-        var timePassed = 0.001 * (Date.now() - this.lastTime);
-        this.lastTime = Date.now();
-        if (UI.mouseDrag) return;
-        var count = 10;
-        var elapse = timePassed / count;
-        while (count--) {
-            this.simulate(elapse);
-        }
     },
 
     start() {

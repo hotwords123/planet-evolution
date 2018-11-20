@@ -8,7 +8,6 @@ var UI = Object.assign(new EventEmitter(), {
     mouseX: null,
     mouseY: null,
     mouseClick: false,
-    mouseDrag: false,
     mouseMoved: false,
     mouseButton: null,
     hitPlanet: false,
@@ -69,9 +68,9 @@ var UI = Object.assign(new EventEmitter(), {
                 }
             } else {
                 if (this.selectedPlanet) {
-                    this.accelerate(0.015);
+                    this.accelerate(0.01);
                     this.accelerateTimer = setInterval(function() {
-                        UI.accelerate(0.001);
+                        UI.accelerate(0.004);
                     }, 15);
                 }
             }
@@ -216,12 +215,10 @@ var UI = Object.assign(new EventEmitter(), {
             UI.mouseButton = e.button === 0 ? 'l' : 'r';
             UI.calcMouse(e);
             UI.emit('mousedown', e);
-            if (UI.mouseButton === 'l' && UI.selectedPlanet) UI.mouseDrag = true;
         });
         this.$canvas.mouseup(function(evt) {
             var e = window.event || evt;
             UI.mouseClick = false;
-            UI.mouseDrag = false;
             UI.calcMouse(e);
             UI.emit('mouseup', e);
             UI.mouseButton = null;

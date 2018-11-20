@@ -26,7 +26,7 @@ class Renderer extends EventEmitter {
     }
 
     get centerPos() {
-        return new Pos(this.cameraX + this.width / 2, this.cameraY + this.height / 2);
+        return new Pos(-this.cameraX + this.width / 2, -this.cameraY + this.height / 2);
     }
 
     renderTimer() {
@@ -108,11 +108,10 @@ class Renderer extends EventEmitter {
                 ctx.lineTo(planet.x + planet.v.x, planet.y + planet.v.y);
                 ctx.stroke();
 
-                var a = planet.a;
                 ctx.strokeStyle = '#09f';
                 ctx.beginPath();
                 ctx.moveTo(planet.x, planet.y);
-                ctx.lineTo(planet.x + a.x, planet.y + a.y);
+                ctx.lineTo(planet.x + planet.a.x, planet.y + planet.a.y);
                 ctx.stroke();
             }
         });
