@@ -5,12 +5,13 @@ var UI = Object.assign(new EventEmitter(), {
     $header: $('.toolbar-header'),
     $canvas: $('.renderer'),
 
+    mouseX: null,
+    mouseY: null,
     mouseClick: false,
     mouseDrag: false,
     mouseMoved: false,
     mouseButton: null,
-    mouseX: null,
-    mouseY: null,
+    hitPlanet: false,
 
     accelerateTimer: null,
 
@@ -59,10 +60,12 @@ var UI = Object.assign(new EventEmitter(), {
     registerEvents() {
         this.on('mousedown', function() {
             var x = this.worldX, y = this.worldY;
+            this.hitPlanet = false;
             if (this.mouseButton === 'l') {
                 var planet = Simulator.planetFromPos(x, y);
                 if (planet) {
                     this.selectedPlanet = planet;
+                    this.hitPlanet = true;
                 }
             } else {
                 if (this.selectedPlanet) {
@@ -76,11 +79,8 @@ var UI = Object.assign(new EventEmitter(), {
         this.on('mouseup', function() {
             var x = this.worldX, y = this.worldY;
             if (this.mouseButton === 'l') {
-                if (!this.mouseMoved) {
-                    var planet = Simulator.planetFromPos(x, y);
-                    if (!planet) {
-                        this.selectedPlanet = null;
-                    }
+                if (this.selectedPlanet && !this.mouseMoved && !this.hitPlanet) {
+                    this.selectedPlanet = null;
                 }
             } else {
                 //
@@ -89,6 +89,7 @@ var UI = Object.assign(new EventEmitter(), {
                 clearInterval(this.accelerateTimer);
                 this.accelerateTimer = null;
             }
+            this.hitPlanet = true;
         });
         this.on('mousemove', function() {
             var x = this.worldX, y = this.worldY;
@@ -104,7 +105,7 @@ var UI = Object.assign(new EventEmitter(), {
             var x = this.worldX, y = this.worldY;
             var deltaX = this.deltaX, deltaY = this.deltaY;
             if (this.mouseButton === 'l') {
-                if (this.selectedPlanet) {
+                if (this.hitPlanet) {
                     this.selectedPlanet.x += deltaX;
                     this.selectedPlanet.y += deltaY;
                 } else {
