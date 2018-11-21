@@ -4,14 +4,14 @@ class Pos {
         this.x = x;
         this.y = y;
     }
+    copy() {
+        return new Pos(this.x, this.y);
+    }
     plus(b) {
         return new Pos(this.x + b.x, this.y + b.y);
     }
     plus_eq(b) {
         this.x += b.x; this.y += b.y;
-    }
-    copy() {
-        return new Pos(this.x, this.y);
     }
 }
 
@@ -24,6 +24,9 @@ class Vector {
             this.x = x;
             this.y = y;
         }
+    }
+    copy() {
+        return new Vector(this.x, this.y);
     }
     get unit() {
         let l = this.length;
@@ -44,8 +47,14 @@ class Vector {
     multiply(b) {
         return new Vector(this.x * b, this.y * b);
     }
+    multiply_eq(b) {
+        this.x *= b; this.y *= b;
+    }
     divide(b) {
         return new Vector(this.x / b, this.y / b);
+    }
+    divide_eq(b) {
+        this.x /= b; this.y /= b;
     }
     inv() {
         return new Vector(-this.x, -this.y);

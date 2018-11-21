@@ -1,22 +1,29 @@
 
 var Simulator = {
 
-    G: 2,
+    G: 800,
     MAX_DIST: 50000,
 
     lastTime: null,
     interval: null,
     
     planets: [],
+    lockedPlanets: [],
+    watchedPlanets: [],
+    watchedPlanetsOrbit: [],
+
+    calcRadius(mass) {
+        return 2.5 + Math.pow(mass, 0.4) * 2.5;
+    },
 
     addPlanet(obj) {
-        this.planets.push(new Planet(obj.x, obj.y, obj.r, obj.v));
+        this.planets.push(new Planet(obj.x, obj.y, obj.r, obj.m, obj.v));
     },
 
     planetFromPos(x, y) {
         var pos = new Pos(x, y);
         for (var i = this.planets.length - 1; i >= 0; --i) {
-            if (new Vector(this.planets[i].pos, pos).length <= this.planets[i].r) return this.planets[i];
+            if (new Vector(this.planets[i].pos, pos).length < this.planets[i].r + 10) return this.planets[i];
         }
         return null;
     },
@@ -30,30 +37,89 @@ var Simulator = {
 
     removePlanetAt(index) {
         var planet = this.planets.splice(index, 1)[0];
-        if (planet === UI.selectedPlanet) {
-            UI.selectedPlanet = null;
-        }
         if (planet === UI.hoveredPlanet) {
             UI.hoveredPlanet = null;
         }
-        index = UI.lockedPlanets.indexOf(planet);
+        index = UI.selectedPlanets.indexOf(planet);
         if (index !== -1) {
-            UI.lockedPlanets.splice(index, 1);
+            UI.selectedPlanets.splice(index, 1);
         }
-        index = UI.watchedPlanets.indexOf(planet);
+        index = this.lockedPlanets.indexOf(planet);
         if (index !== -1) {
-            UI.watchedPlanets.splice(index, 1);
-            UI.watchedOrbit.splice(index, 1);
+            this.lockedPlanets.splice(index, 1);
+        }
+        index = this.watchedPlanets.indexOf(planet);
+        if (index !== -1) {
+            this.watchedPlanets.splice(index, 1);
+            this.watchedPlanetsOrbit.splice(index, 1);
         }
     },
 
     clearPlanets(obj) {
         this.planets = [];
-        UI.selectedPlanet = null;
         UI.hoveredPlanet = null;
-        UI.lockedPlanets = [];
-        UI.watchedPlanets = [];
-        UI.watchedOrbit = [];
+        UI.selectedPlanets = [];
+        UI.activePlanet = null;
+        UI.planetAdded = true;
+        this.lockedPlanets = [];
+        this.watchedPlanets = [];
+        this.watchedPlanetsOrbit = [];
+    },
+
+    isLocked(planet) {
+        return this.lockedPlanets.indexOf(planet) !== -1;
+    },
+
+    setLocked(planet, flag) {
+        var index = this.lockedPlanets.indexOf(planet);
+        if (index === -1) {
+            if (flag) {
+                this.lockedPlanets.push(planet);
+            }
+        } else {
+            if (!flag) {
+                this.lockedPlanets.splice(index, 1);
+            }
+        }
+    },
+
+    toggleLocked(planet) {
+        var index = this.lockedPlanets.indexOf(planet);
+        if (index === -1) {
+            this.lockedPlanets.push(planet);
+        } else {
+            this.lockedPlanets.splice(index, 1);
+        }
+    },
+
+    isWatched(planet) {
+        return this.watchedPlanets.indexOf(planet) !== -1;
+    },
+
+    setWatched(planet, flag) {
+        var index = this.watchedPlanets.indexOf(planet);
+        if (index === -1) {
+            if (flag) {
+                this.watchedPlanets.push(planet);
+                this.watchedPlanetsOrbit.push([]);
+            }
+        } else {
+            if (!flag) {
+                this.watchedPlanets.splice(index, 1);
+                this.watchedPlanetsOrbit.splice(index, 1);
+            }
+        }
+    },
+
+    toggleWatched(planet) {
+        var index = this.watchedPlanets.indexOf(planet);
+        if (index === -1) {
+            this.watchedPlanets.push(planet);
+            this.watchedPlanetsOrbit.push([]);
+        } else {
+            this.watchedPlanets.splice(index, 1);
+            this.watchedPlanetsOrbit.splice(index, 1);
+        }
     },
 
     simulate(t) {
@@ -73,8 +139,8 @@ var Simulator = {
         }
         for (var i = 0; i < n; ++i) {
             A = this.planets[i];
-            if (UI.lockedPlanets.indexOf(A) !== -1) {
-                A.v.clear(); continue;
+            if (this.lockedPlanets.indexOf(A) !== -1) {
+                A.v.clear(); A.F.clear(); A.a.clear(); continue;
             }
             A.a = A.F.divide(A.mass);
             A.pos.plus_eq(A.v.plus(A.a.multiply(0.5 * t)).multiply(t));
@@ -83,10 +149,29 @@ var Simulator = {
     },
 
     tick() {
-        var timePassed = 0.001 * (Date.now() - this.lastTime);
+        var timePassed = 0.001 * (Date.now() - this.lastTime) * 10;
         this.lastTime = Date.now();
-        if (UI.mouseClick && UI.hitPlanet) return;
-        var count = 10;
+        if (UI.mouseClick && UI.activePlanet) return;
+        var countPlanets = this.planets.length;
+        if (!countPlanets) return;
+        var count;
+        if (countPlanets <= 3) {
+            count = 16384;
+        } else if (countPlanets <= 5) {
+            count = 8192;
+        } else if (countPlanets <= 8) {
+            count = 4096;
+        } else if (countPlanets <= 12) {
+            count = 2048;
+        } else if (countPlanets <= 16) {
+            count = 1024;
+        } else if (countPlanets <= 24) {
+            count = 512;
+        } else if (countPlanets <= 50) {
+            count = 256;
+        } else {
+            count = 128;
+        }
         var elapse = timePassed / count;
         while (count--) {
             this.simulate(elapse);
@@ -98,13 +183,13 @@ var Simulator = {
                 ++i;
             }
         }
-        UI.watchedPlanets.forEach(function(planet, index) {
-            var arr = UI.watchedOrbit[index];
-            if (!arr.length || new Vector(arr[arr.length - 1], planet.pos).length > 3) {
+        this.watchedPlanets.forEach(function(planet, index) {
+            var arr = this.watchedPlanetsOrbit[index];
+            if (!arr.length || new Vector(arr[arr.length - 1], planet.pos).length > 2) {
                 arr.push(planet.pos.copy());
                 if (arr.length > 2000) arr.shift();
             }
-        });
+        }, this);
     },
 
     start() {
