@@ -88,3 +88,13 @@ canvas.renderer {
     color: #000;
     user-select: none;
 }
+
+.debug-info-title {
+    font-weight: bold;
+}
+
+.debug-info-sep {
+    margin: 3px 0;
+    height: 1px;
+    background: #666;
+}

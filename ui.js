@@ -54,6 +54,16 @@ var UI = Object.assign(new EventEmitter(), {
         });
     },
 
+    modifyPlanetSize(rate) {
+        if (this.selectedPlanets.length) {
+            this.selectedPlanets.forEach(function(planet) {
+                var temp = Math.min(200, Math.max(0.1, planet.mass + rate));
+                planet.mass = temp;
+                planet.r = Simulator.calcRadius(temp);
+            });
+        }
+    },
+
     togglePaused() {
         if (this.paused) {
             Simulator.start();
@@ -162,20 +172,9 @@ var UI = Object.assign(new EventEmitter(), {
         });
         this.on('mousewheel', function(e, wheelDelta) {
             if (e.ctrlKey) {
-                //e.preventDefault();
-            } else {
-                if (this.selectedPlanets.length) {
-                    this.selectedPlanets.forEach(function(planet) {
-                        var delta = e.shiftKey ? 0.05 : 1;
-                        if (wheelDelta < 0) {
-                            delta = -delta;
-                        }
-                        var temp = Math.min(200, Math.max(0.1, planet.mass + delta));
-                        planet.mass = temp;
-                        planet.r = Simulator.calcRadius(temp);
-                    });
-                }
+                e.preventDefault();
             }
+            //
         });
         
         this.on('keydown_32', function(e) { // Space
@@ -263,6 +262,12 @@ var UI = Object.assign(new EventEmitter(), {
                     }
                 });
             }
+        });
+        this.on('keydown_38', function(e) { // Arrow-Up
+            this.modifyPlanetSize(e.shiftKey ? +0.05 : +2);
+        });
+        this.on('keydown_40', function(e) { // Arrow-Down
+            this.modifyPlanetSize(e.shiftKey ? -0.05 : -2);
         });
     },
 

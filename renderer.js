@@ -108,13 +108,13 @@ class Renderer extends EventEmitter {
                 ctx.strokeStyle = '#0f0';
                 ctx.beginPath();
                 ctx.moveTo(planet.x, planet.y);
-                ctx.lineTo(planet.x + planet.v.x * 5, planet.y + planet.v.y * 5);
+                ctx.lineTo(planet.x + planet.v.x * 3, planet.y + planet.v.y * 3);
                 ctx.stroke();
 
                 ctx.strokeStyle = '#09f';
                 ctx.beginPath();
                 ctx.moveTo(planet.x, planet.y);
-                ctx.lineTo(planet.x + planet.a.x * 25, planet.y + planet.a.y * 25);
+                ctx.lineTo(planet.x + planet.a.x * 9, planet.y + planet.a.y * 9);
                 ctx.stroke();
             }
         });
@@ -123,29 +123,78 @@ class Renderer extends EventEmitter {
 
         if (UI.debug) {
 
-            var info = [];
+            var info = new DebugInfo();
 
-            info.push([
+            info.title([
                 'Planets:', Simulator.planets.length,
                 'Locked:', Simulator.lockedPlanets.length,
                 'Watching:', Simulator.watchedPlanets.length
             ].join(' '));
 
-            var planets = UI.selectedPlanets;
-            var N = planets.length;
-            if (N) {
-                info.push('Selected ' + (N > 1 ? 'planets' : 'planet') + ':');
+            if (Simulator.planets.length > UI.selectedPlanets.length) {
+
+                info.newBlock('All Planets');
+
+                var planets = Simulator.planets;
                 var mass = 0,
                     x = 0, y = 0,
-                    v = new Vector(0, 0),
-                    F = new Vector(0, 0),
-                    a = new Vector(0, 0),
+                    p = new Vector(0, 0),
                     Ek = 0, Ep = 0;
-                for (var i = 0; i < N; ++i) {
+
+                for (var i = 0; i < planets.length; ++i) {
                     var A = planets[i];
                     mass += A.mass;
                     x += A.x * A.mass; y += A.y * A.mass;
-                    v.plus_eq(A.v.multiply(A.mass));
+                    p.plus_eq(A.v.multiply(A.mass));
+                    Ek += 0.5 * A.mass * A.v.length2;
+                    for (var j = 0; j < i; ++j) {
+                        var B = planets[j];
+                        Ep -= Simulator.G * A.mass * B.mass / new Vector(A.pos, B.pos).length;
+                    }
+                }
+
+                x /= mass; y /= mass;
+                var v = p.divide(mass);
+
+                info.lines([
+                    'mass: ' + mass.toFixed(4),
+                    [
+                        'x<sub>C</sub>:', x.toFixed(4),
+                        'y<sub>C</sub>:', y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'v<sub>C</sub>:', v.length.toFixed(4),
+                        'v<sub>Cx</sub>:', v.x.toFixed(4),
+                        'v<sub>Cy</sub>:', v.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'p:', p.length.toFixed(4),
+                        'p<sub>x</sub>:', p.x.toFixed(4),
+                        'p<sub>y</sub>:', p.y.toFixed(4)
+                    ].join(' '),
+                    'E: ' + (Ek + Ep).toFixed(4),
+                    'E<sub>k</sub>: ' + Ek.toFixed(4),
+                    'E<sub>p</sub>: ' + Ep.toFixed(4)
+                ]);
+            }
+
+            if (UI.selectedPlanets.length) {
+                var planets = UI.selectedPlanets;
+                info.newBlock([
+                    'Selected ', planets.length > 1 ? 'Planets' : 'Planet',
+                    ' (', planets.length === Simulator.planets.length ? 'all' : planets.length, ')'
+                ].join(''));
+                var mass = 0,
+                    x = 0, y = 0,
+                    p = new Vector(0, 0),
+                    F = new Vector(0, 0),
+                    a = new Vector(0, 0),
+                    Ek = 0, Ep = 0;
+                for (var i = 0; i < planets.length; ++i) {
+                    var A = planets[i];
+                    mass += A.mass;
+                    x += A.x * A.mass; y += A.y * A.mass;
+                    p.plus_eq(A.v.multiply(A.mass));
                     F.plus_eq(A.F);
                     a.plus_eq(A.a.multiply(A.mass));
                     Ek += 0.5 * A.mass * A.v.length2;
@@ -155,74 +204,84 @@ class Renderer extends EventEmitter {
                     }
                 }
                 x /= mass; y /= mass;
-                var p = v.copy();
-                v.divide_eq(mass);
+                var v = p.divide(mass);
                 a.divide_eq(mass);
-                info.push('mass: ' + mass.toFixed(4));
-                info.push([
-                    'x:', x.toFixed(4),
-                    'y:', y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'v<sub>C</sub>:', v.length.toFixed(4),
-                    'v<sub>Cx</sub>:', v.x.toFixed(4),
-                    'v<sub>Cy</sub>:', v.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'F:', F.length.toFixed(4),
-                    'F<sub>x</sub>:', F.x.toFixed(4),
-                    'F<sub>y</sub>:', F.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'a<sub>C</sub>:', a.length.toFixed(4),
-                    'a<sub>Cx</sub>:', a.x.toFixed(4),
-                    'a<sub>Cy</sub>:', a.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'p:', p.length.toFixed(4),
-                    'p<sub>x</sub>:', p.x.toFixed(4),
-                    'p<sub>y</sub>:', p.y.toFixed(4)
-                ].join(' '));
-                info.push('E: ' + (Ek + Ep).toFixed(4));
-                info.push('E<sub>k</sub>: ' + Ek.toFixed(4));
-                info.push('E<sub>p</sub>: ' + Ep.toFixed(4));
+                if (planets.length === 2) {
+                    var vec = new Vector(planets[0].pos, planets[1].pos);
+                    info.lines([
+                        'distance: ' + vec.length.toFixed(4),
+                        'deltaX: ' + vec.x.toFixed(4) + ' deltaY: ' + vec.y.toFixed(4)
+                    ]);
+                }
+                info.lines([
+                    'mass: ' + mass.toFixed(4),
+                    [
+                        'x<sub>C</sub>:', x.toFixed(4),
+                        'y<sub>C</sub>:', y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'v<sub>C</sub>:', v.length.toFixed(4),
+                        'v<sub>Cx</sub>:', v.x.toFixed(4),
+                        'v<sub>Cy</sub>:', v.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'p:', p.length.toFixed(4),
+                        'p<sub>x</sub>:', p.x.toFixed(4),
+                        'p<sub>y</sub>:', p.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'F:', F.length.toFixed(4),
+                        'F<sub>x</sub>:', F.x.toFixed(4),
+                        'F<sub>y</sub>:', F.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'a<sub>C</sub>:', a.length.toFixed(4),
+                        'a<sub>Cx</sub>:', a.x.toFixed(4),
+                        'a<sub>Cy</sub>:', a.y.toFixed(4)
+                    ].join(' '),
+                    'E: ' + (Ek + Ep).toFixed(4),
+                    'E<sub>k</sub>: ' + Ek.toFixed(4),
+                    'E<sub>p</sub>: ' + Ep.toFixed(4)
+                ]);
             }
 
             var planet = UI.hoveredPlanet;
-            if (planet) {
-                info.push('Hovered planet:');
-                info.push('mass: ' + planet.mass.toFixed(4));
-                info.push([
-                    'x:', planet.x.toFixed(4),
-                    'y:', planet.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'v:', planet.v.length.toFixed(4),
-                    'v<sub>x</sub>:', planet.v.x.toFixed(4),
-                    'v<sub>y</sub>:', planet.v.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'F:', planet.F.length.toFixed(4),
-                    'F<sub>x</sub>:', planet.F.x.toFixed(4),
-                    'F<sub>y</sub>:', planet.F.y.toFixed(4)
-                ].join(' '));
-                info.push([
-                    'a:', planet.a.length.toFixed(4),
-                    'a<sub>x</sub>:', planet.a.x.toFixed(4),
-                    'a<sub>y</sub>:', planet.a.y.toFixed(4)
-                ].join(' '));
-                info.push('radius: ' + (planet.v.length2 / planet.a.length).toFixed(4));
+            if (planet && Simulator.planets.length > 1 && !(UI.selectedPlanets.length === 1 && UI.selectedPlanets[0] === planet)) {
+                info.newBlock('Hovered Planet');
                 var p = planet.v.multiply(planet.mass);
-                info.push([
-                    'p:', p.length.toFixed(4),
-                    'p<sub>x</sub>:', p.x.toFixed(4),
-                    'p<sub>y</sub>:', p.y.toFixed(4)
-                ].join(' '));
                 var Ek = planet.v.length2 * planet.mass * 0.5;
-                info.push('E<sub>k</sub>: ' + Ek.toFixed(4));
+                info.lines([
+                    'mass: ' + planet.mass.toFixed(4),
+                    [
+                        'x:', planet.x.toFixed(4),
+                        'y:', planet.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'v:', planet.v.length.toFixed(4),
+                        'v<sub>x</sub>:', planet.v.x.toFixed(4),
+                        'v<sub>y</sub>:', planet.v.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'p:', p.length.toFixed(4),
+                        'p<sub>x</sub>:', p.x.toFixed(4),
+                        'p<sub>y</sub>:', p.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'F:', planet.F.length.toFixed(4),
+                        'F<sub>x</sub>:', planet.F.x.toFixed(4),
+                        'F<sub>y</sub>:', planet.F.y.toFixed(4)
+                    ].join(' '),
+                    [
+                        'a:', planet.a.length.toFixed(4),
+                        'a<sub>x</sub>:', planet.a.x.toFixed(4),
+                        'a<sub>y</sub>:', planet.a.y.toFixed(4)
+                    ].join(' '),
+                    'radius: ' + (planet.v.length2 / planet.a.length).toFixed(4),
+                    'E<sub>k</sub>: ' + Ek.toFixed(4)
+                ]);
             }
 
-            $('.debug-info').html(info.join('<br>'));
+            $('.debug-info').html(info.toHTML());
         }
 
         this.renderTime.unshift(Date.now());
@@ -250,6 +309,42 @@ class Renderer extends EventEmitter {
         }, false);
     }
 
+}
+
+class DebugInfo {
+    constructor() {
+        this.clear();
+    }
+    get lastBlock() {
+        return this.blocks[this.blocks.length - 1];
+    }
+    set lastBlock(a) {
+        this.blocks[this.blocks.length - 1] = a;
+    }
+    clear() {
+        this.blocks = [''];
+    }
+    newBlock(title) {
+        this.blocks.push('');
+        if (title) this.title(title);
+    }
+    insert(html) {
+        this.lastBlock += html;
+    }
+    title(html) {
+        this.lastBlock += '<div class="debug-info-title">' + html + '</div>';
+    }
+    line(html) {
+        this.lastBlock += '<div>' + html + '</div>';
+    }
+    lines(arr) {
+        arr.forEach(function(a) {
+            this.line(a);
+        }, this);
+    }
+    toHTML() {
+        return this.blocks.join('<div class="debug-info-sep"></div>');
+    }
 }
 
 var renderer = new Renderer($("canvas.renderer"));

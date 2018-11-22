@@ -13,7 +13,7 @@ var Simulator = {
     watchedPlanetsOrbit: [],
 
     calcRadius(mass) {
-        return 2.5 + Math.pow(mass, 0.4) * 2.5;
+        return 2 + Math.pow(mass, 0.4) * 2;
     },
 
     addPlanet(obj) {
@@ -23,7 +23,7 @@ var Simulator = {
     planetFromPos(x, y) {
         var pos = new Pos(x, y);
         for (var i = this.planets.length - 1; i >= 0; --i) {
-            if (new Vector(this.planets[i].pos, pos).length < this.planets[i].r + 10) return this.planets[i];
+            if (new Vector(this.planets[i].pos, pos).length < this.planets[i].r + 6) return this.planets[i];
         }
         return null;
     },
