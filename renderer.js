@@ -119,6 +119,15 @@ class Renderer extends EventEmitter {
             }
         });
 
+        Simulator.particles.forEach(function(particle) {
+            ctx.lineWidth = 0;
+            ctx.fillStyle = 'rgba(255, 255, 255, ' + particle.opacity + ')';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.r, 0, 2 * Math.PI, false);
+            ctx.fill();
+        });
+
         ctx.restore();
 
         if (UI.debug) {
@@ -173,8 +182,10 @@ class Renderer extends EventEmitter {
                         'p<sub>y</sub>:', p.y.toFixed(4)
                     ].join(' '),
                     'E: ' + (Ek + Ep).toFixed(4),
-                    'E<sub>k</sub>: ' + Ek.toFixed(4),
-                    'E<sub>p</sub>: ' + Ep.toFixed(4)
+                    [
+                        'E<sub>k</sub>:', Ek.toFixed(4),
+                        'E<sub>p</sub>:', Ep.toFixed(4)
+                    ].join(' ')
                 ]);
             }
 
@@ -239,9 +250,11 @@ class Renderer extends EventEmitter {
                         'a<sub>Cx</sub>:', a.x.toFixed(4),
                         'a<sub>Cy</sub>:', a.y.toFixed(4)
                     ].join(' '),
-                    'E: ' + (Ek + Ep).toFixed(4),
-                    'E<sub>k</sub>: ' + Ek.toFixed(4),
-                    'E<sub>p</sub>: ' + Ep.toFixed(4)
+                    'E: ' +  (Ek + Ep).toFixed(4),
+                    [
+                        'E<sub>k</sub>:', Ek.toFixed(4),
+                        'E<sub>p</sub>:', Ep.toFixed(4)
+                    ].join(' ')
                 ]);
             }
 

@@ -12,9 +12,7 @@ var Simulator = {
     watchedPlanets: [],
     watchedPlanetsOrbit: [],
 
-    calcRadius(mass) {
-        return 2 + Math.pow(mass, 0.4) * 2;
-    },
+    particles: [],
 
     addPlanet(obj) {
         this.planets.push(new Planet(obj.x, obj.y, obj.r, obj.m, obj.v));
@@ -23,7 +21,7 @@ var Simulator = {
     planetFromPos(x, y) {
         var pos = new Pos(x, y);
         for (var i = this.planets.length - 1; i >= 0; --i) {
-            if (new Vector(this.planets[i].pos, pos).length < this.planets[i].r + 6) return this.planets[i];
+            if (new Vector(this.planets[i].pos, pos).length2 < Math.pow(this.planets[i].r + 6, 2)) return this.planets[i];
         }
         return null;
     },
@@ -37,6 +35,10 @@ var Simulator = {
 
     removePlanetAt(index) {
         var planet = this.planets.splice(index, 1)[0];
+        this.cleanupPlanet(planet);
+    },
+
+    cleanupPlanet(planet) {
         if (planet === UI.hoveredPlanet) {
             UI.hoveredPlanet = null;
         }
@@ -122,6 +124,66 @@ var Simulator = {
         }
     },
 
+    calcRadius(mass) {
+        return 3 + Math.pow(mass, 0.5) * 0.7;
+    },
+
+    mergePlanet(A, B) {
+        var mass = A.mass + B.mass;
+        return new Planet(
+            (A.x * A.mass + B.x * B.mass) / mass,
+            (A.y * A.mass + B.y * B.mass) / mass,
+            this.calcRadius(mass),
+            mass,
+            A.v.multiply(A.mass).plus(B.v.multiply(B.mass)).divide(mass)
+        );
+    },
+
+    bombPlanet(A, B, C) {
+        var v_r = Math.min(A.v.minus(B.v).length, 1000);
+        var m_r = Math.pow(Math.min(A.mass, B.mass), 0.5);
+        var p_r = m_r * v_r;
+        var count = Math.floor(20 + p_r * 0.01);
+        if (count > 4000) count = 4000;
+        var v_m = 5 + p_r * 0.01;
+        var x = (A.x * B.r + B.x * A.r) / (A.r + B.r);
+        var y = (A.y * B.r + B.y * A.r) / (A.r + B.r);
+        for (var i = 0; i < count; ++i) {
+            var size = v_m * Math.sqrt(Math.random());
+            var arg = Math.random() * 2 * Math.PI;
+            this.particles.push(new Particle(
+                 x, y,
+                 new Vector(
+                     size * Math.cos(arg),
+                     size * Math.sin(arg)
+                 ).plus(C.v),
+                 Math.random() * 1 + 1,
+                 Math.random() * 0.2 + 0.3
+            ));
+        }
+    },
+
+    processCollision() {
+        var arr = this.planets;
+        var A, B, C, vec;
+        for (var i = 1; i < arr.length; ++i) {
+            A = arr[i];
+            for (var j = 0; j < i; ++j) {
+                B = arr[j];
+                vec = new Vector(A.pos, B.pos);
+                if (vec.length2 < Math.pow(A.r + B.r, 2)) {
+                    C = this.mergePlanet(A, B);
+                    this.bombPlanet(A, B, C);
+                    this.cleanupPlanet(A);
+                    this.cleanupPlanet(B);
+                    arr[j] = C;
+                    arr.splice(i, 1);
+                    --i; break;
+                }
+            }
+        }
+    },
+
     simulate(t) {
         var A, B, F;
         var n = this.planets.length;
@@ -146,43 +208,22 @@ var Simulator = {
             A.pos.plus_eq(A.v.plus(A.a.multiply(0.5 * t)).multiply(t));
             A.v.plus_eq(A.a.multiply(t));
         }
+        this.processCollision();
     },
 
-    tick() {
-        var timePassed = 0.001 * (Date.now() - this.lastTime) * 10;
-        this.lastTime = Date.now();
-        if (UI.mouseClick && UI.activePlanet) return;
-        var countPlanets = this.planets.length;
-        if (!countPlanets) return;
-        var count;
-        if (countPlanets <= 3) {
-            count = 16384;
-        } else if (countPlanets <= 5) {
-            count = 8192;
-        } else if (countPlanets <= 8) {
-            count = 4096;
-        } else if (countPlanets <= 12) {
-            count = 2048;
-        } else if (countPlanets <= 16) {
-            count = 1024;
-        } else if (countPlanets <= 24) {
-            count = 512;
-        } else if (countPlanets <= 50) {
-            count = 256;
-        } else {
-            count = 128;
-        }
-        var elapse = timePassed / count;
-        while (count--) {
-            this.simulate(elapse);
-        }
+    removeEscapingPlanets() {
+        var dist2 = this.MAX_DIST * this.MAX_DIST;
         for (var i = 0; i < this.planets.length; ) {
-            if (new Vector(this.planets[i].pos, renderer.centerPos).length > this.MAX_DIST) {
+            var vec = new Vector(this.planets[i].pos, renderer.centerPos);
+            if (vec.length2 > dist2) {
                 this.removePlanetAt(i);
             } else {
                 ++i;
             }
         }
+    },
+
+    updatePlanetsOrbit() {
         this.watchedPlanets.forEach(function(planet, index) {
             var arr = this.watchedPlanetsOrbit[index];
             if (!arr.length || new Vector(arr[arr.length - 1], planet.pos).length > 2) {
@@ -190,6 +231,43 @@ var Simulator = {
                 if (arr.length > 2000) arr.shift();
             }
         }, this);
+    },
+
+    getSimulateCount() {
+        var count = this.planets.length;
+        if (!count) return 0;
+        if (count <= 3) return 16384;
+        if (count <= 5) return 8192;
+        if (count <= 8) return 4096;
+        if (count <= 12) return 2048;
+        if (count <= 16) return 1024;
+        if (count <= 24) return 512;
+        if (count <= 50) return 256;
+        return 128;
+    },
+
+    updateParticles(t) {
+        for (var i = 0; i < this.particles.length; ) {
+            var p = this.particles[i];
+            p.update(t);
+            if (p.opacity <= 0) this.particles.splice(i, 1);
+            else ++i;
+        }
+    },
+
+    tick() {
+        var timePassed = 0.001 * (Date.now() - this.lastTime) * 10;
+        this.lastTime = Date.now();
+        if (UI.mouseClick && UI.activePlanet) return;
+        var count = this.getSimulateCount();
+        if (!count) return;
+        var elapse = timePassed / count;
+        while (count--) {
+            this.simulate(elapse);
+        }
+        this.removeEscapingPlanets();
+        this.updatePlanetsOrbit();
+        this.updateParticles(timePassed);
     },
 
     start() {

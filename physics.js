@@ -7,6 +7,9 @@ class Pos {
     copy() {
         return new Pos(this.x, this.y);
     }
+    toVector() {
+        return new Vector(this.x, this.y);
+    }
     plus(b) {
         return new Pos(this.x + b.x, this.y + b.y);
     }
@@ -28,6 +31,9 @@ class Vector {
     copy() {
         return new Vector(this.x, this.y);
     }
+    toPos() {
+        return new Pos(this.x, this.y);
+    }
     get unit() {
         let l = this.length;
         return new Vector(this.x / l, this.y / l);
@@ -43,6 +49,9 @@ class Vector {
     }
     plus_eq(b) {
         this.x += b.x; this.y += b.y;
+    }
+    minus(b) {
+        return new Vector(this.x - b.x, this.y - b.y);
     }
     multiply(b) {
         return new Vector(this.x * b, this.y * b);
