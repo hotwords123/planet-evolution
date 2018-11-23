@@ -140,12 +140,12 @@ var Simulator = {
     },
 
     bombPlanet(A, B, C) {
-        var v_r = Math.min(A.v.minus(B.v).length, 1000);
-        var m_r = Math.pow(Math.min(A.mass, B.mass), 0.5);
-        var p_r = m_r * v_r;
-        var count = Math.floor(20 + p_r * 0.01);
+        //var v_r = Math.min(A.v.minus(B.v).length, 1000);
+        //var m_r = Math.pow(Math.min(A.mass, B.mass), 0.5);
+        var p_r = A.v.minus(C.v).length * A.mass;
+        var count = Math.floor(20 + Math.pow(p_r, 0.8) * 0.05);
         if (count > 4000) count = 4000;
-        var v_m = 5 + p_r * 0.01;
+        var v_m = Math.pow(p_r, 0.5) * 0.4;
         var x = (A.x * B.r + B.x * A.r) / (A.r + B.r);
         var y = (A.y * B.r + B.y * A.r) / (A.r + B.r);
         for (var i = 0; i < count; ++i) {
@@ -208,7 +208,6 @@ var Simulator = {
             A.pos.plus_eq(A.v.plus(A.a.multiply(0.5 * t)).multiply(t));
             A.v.plus_eq(A.a.multiply(t));
         }
-        this.processCollision();
     },
 
     removeEscapingPlanets() {
@@ -263,6 +262,7 @@ var Simulator = {
         if (!count) return;
         var elapse = timePassed / count;
         while (count--) {
+            this.processCollision();
             this.simulate(elapse);
         }
         this.removeEscapingPlanets();

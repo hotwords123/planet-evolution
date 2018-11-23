@@ -57,7 +57,7 @@ var UI = Object.assign(new EventEmitter(), {
     modifyPlanetSize(rate) {
         if (this.selectedPlanets.length) {
             this.selectedPlanets.forEach(function(planet) {
-                var temp = Math.min(200, Math.max(0.1, planet.mass + rate));
+                var temp = Math.max(0.1, planet.mass + rate);
                 planet.mass = temp;
                 planet.r = Simulator.calcRadius(temp);
             });
@@ -264,10 +264,22 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('keydown_38', function(e) { // Arrow-Up
-            this.modifyPlanetSize(e.shiftKey ? +0.05 : +2);
+            var rate = 1;
+            if (e.ctrlKey) {
+                rate = 20;
+            } else if (e.shiftKey) {
+                rate = 0.05;
+            }
+            this.modifyPlanetSize(+rate);
         });
         this.on('keydown_40', function(e) { // Arrow-Down
-            this.modifyPlanetSize(e.shiftKey ? -0.05 : -2);
+            var rate = 1;
+            if (e.ctrlKey) {
+                rate = 20;
+            } else if (e.shiftKey) {
+                rate = 0.05;
+            }
+            this.modifyPlanetSize(-rate);
         });
     },
 

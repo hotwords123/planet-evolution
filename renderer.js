@@ -121,7 +121,7 @@ class Renderer extends EventEmitter {
 
         Simulator.particles.forEach(function(particle) {
             ctx.lineWidth = 0;
-            ctx.fillStyle = 'rgba(255, 255, 255, ' + particle.opacity + ')';
+            ctx.fillStyle = 'rgba(192, 192, 192, ' + particle.opacity + ')';
             ctx.shadowBlur = 0;
             ctx.beginPath();
             ctx.arc(particle.x, particle.y, particle.r, 0, 2 * Math.PI, false);
