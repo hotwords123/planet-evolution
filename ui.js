@@ -80,10 +80,10 @@ var UI = Object.assign(new EventEmitter(), {
     toggleDebug() {
         if (this.debug) {
             $('.btn-debug').removeClass('invert');
-            $('.debug-info').hide();
+            $('.info.debug').hide();
         } else {
             $('.btn-debug').addClass('invert');
-            $('.debug-info').show();
+            $('.info.debug').show();
         }
         this.debug = !this.debug;
     },
@@ -192,7 +192,10 @@ var UI = Object.assign(new EventEmitter(), {
             if (e.ctrlKey) {
                 e.preventDefault();
             }
-            //
+            renderer.scaleCamera(
+                wheelDelta > 0 ? 1.04 : 0.96,
+                this.mousePos || renderer.screenCenterPos
+            );
         });
         
         this.on('keydown_32', function(e) { // Space

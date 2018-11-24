@@ -218,8 +218,9 @@ var Simulator = {
 
     removeEscapingPlanets() {
         var dist2 = this.MAX_DIST * this.MAX_DIST;
+        var center = renderer.centerPos;
         for (var i = 0; i < this.planets.length; ) {
-            var vec = new Vector(this.planets[i].pos, renderer.centerPos);
+            var vec = new Vector(this.planets[i].pos, center);
             if (vec.length2 > dist2) {
                 this.removePlanetAt(i);
             } else {

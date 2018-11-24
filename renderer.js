@@ -15,6 +15,7 @@ class Renderer extends EventEmitter {
 
         this.offsetX = 0;
         this.offsetY = 0;
+        this.scale = 1.0;
         
         this.registerEvents();
         this.addListeners();
@@ -24,15 +25,15 @@ class Renderer extends EventEmitter {
 
     toWorldPos(pos) {
         return new Pos(
-            pos.x + this.offsetX,
-            pos.y + this.offsetY
+            this.offsetX + pos.x / this.scale,
+            this.offsetY + pos.y / this.scale
         );
     }
 
     fromWorldPos(pos) {
         return new Pos(
-            pos.x - this.offsetX,
-            pos.y - this.offsetY
+            (pos.x - this.offsetX) * this.scale,
+            (pos.y - this.offsetY) * this.scale
         );
     }
 
@@ -41,8 +42,20 @@ class Renderer extends EventEmitter {
         this.offsetY += y;
     }
 
+    scaleCamera(z, c) {
+        var oldScale = this.scale;
+        this.scale *= z;
+        var temp = 1 / oldScale - 1 / this.scale;
+        this.offsetX += c.x * temp;
+        this.offsetY += c.y * temp;
+    }
+
+    get screenCenterPos() {
+        return new Pos(this.width / 2, this.height / 2);
+    }
+
     get centerPos() {
-        return new Pos(this.offsetX + this.width / 2, this.offsetY + this.height / 2);
+        return this.toWorldPos(this.screenCenterPos);
     }
 
     renderTimer() {
@@ -57,6 +70,7 @@ class Renderer extends EventEmitter {
         var ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
         ctx.save();
+        ctx.scale(this.scale, this.scale);
         ctx.translate(-this.offsetX, -this.offsetY);
 
         Simulator.watchedPlanetsOrbit.forEach(function(arr) {
@@ -143,6 +157,8 @@ class Renderer extends EventEmitter {
         });
 
         ctx.restore();
+
+        $('.info.scale').text('Scale: ' + (this.scale * 100).toFixed(0) + '%');
 
         if (UI.debug) {
 
@@ -308,12 +324,12 @@ class Renderer extends EventEmitter {
                 ]);
             }
 
-            $('.debug-info').html(info.toHTML());
+            $('.info.debug').html(info.toHTML());
         }
 
         this.renderTime.unshift(Date.now());
         if (this.renderTime.length > 30) {
-            $('.fps').text('FPS: ' + (30 * 1000 / (this.renderTime[0] - this.renderTime[30])).toFixed(0));
+            $('.info.fps').text('FPS: ' + (30 * 1000 / (this.renderTime[0] - this.renderTime[30])).toFixed(0));
             this.renderTime.splice(25);
         }
     }
