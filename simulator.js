@@ -4,8 +4,13 @@ var Simulator = {
     G: 800,
     MAX_DIST: 50000,
 
+    tickElapse: 18,
+
     lastTime: null,
     interval: null,
+    lastPlanetsCount: 0,
+    simulateCount: 1024,
+    simulateCountScale: 1,
     
     planets: [],
     lockedPlanets: [],
@@ -143,9 +148,10 @@ var Simulator = {
         //var v_r = Math.min(A.v.minus(B.v).length, 1000);
         //var m_r = Math.pow(Math.min(A.mass, B.mass), 0.5);
         var p_r = A.v.minus(C.v).length * A.mass;
-        var count = Math.floor(20 + Math.pow(p_r, 0.8) * 0.05);
-        if (count > 4000) count = 4000;
-        var v_m = Math.pow(p_r, 0.5) * 0.4;
+        var count = Math.floor(50 + Math.pow(p_r, 0.8) * 0.05);
+        count = Math.min(count, 500);
+        var v_m = 5 + Math.pow(p_r, 0.5) * 0.4;
+        v_m = Math.min(v_m, 120);
         var x = (A.x * B.r + B.x * A.r) / (A.r + B.r);
         var y = (A.y * B.r + B.y * A.r) / (A.r + B.r);
         for (var i = 0; i < count; ++i) {
@@ -232,9 +238,8 @@ var Simulator = {
         }, this);
     },
 
-    getSimulateCount() {
+    getBaseSimulateCount() {
         var count = this.planets.length;
-        if (!count) return 0;
         if (count <= 3) return 16384;
         if (count <= 5) return 8192;
         if (count <= 8) return 4096;
@@ -255,19 +260,35 @@ var Simulator = {
     },
 
     tick() {
-        var timePassed = 0.001 * (Date.now() - this.lastTime) * 10;
+        var timePassed = 0.001 * (Date.now() - this.lastTime);
         this.lastTime = Date.now();
+        timePassed = Math.min(timePassed, 0.05);
+        var worldTime = timePassed * 10;
         if (UI.mouseClick && UI.activePlanet) return;
-        var count = this.getSimulateCount();
-        if (!count) return;
-        var elapse = timePassed / count;
+        if (!this.planets.length) return;
+        if (this.planets.length !== this.lastPlanetsCount) {
+            this.simulateCount = this.getBaseSimulateCount(this.planets.length);
+            this.lastPlanetsCount = this.planets.length;
+        }
+        var count = Math.round(this.simulateCount * this.simulateCountScale);
+        count = Math.max(count, 64);
+        var elapse = worldTime / count;
+        var startTime = Date.now();
         while (count--) {
             this.processCollision();
             this.simulate(elapse);
         }
         this.removeEscapingPlanets();
         this.updatePlanetsOrbit();
-        this.updateParticles(timePassed);
+        this.updateParticles(worldTime);
+        var timeUsed = Date.now() - startTime;
+        var minTime = this.tickElapse * 0.2;
+        var maxTime = this.tickElapse * 0.8;
+        if (timeUsed < minTime) {
+            this.simulateCountScale *= 2;
+        } else if (timeUsed > maxTime) {
+            this.simulateCountScale /= 2;
+        }
     },
 
     start() {
@@ -276,7 +297,7 @@ var Simulator = {
         this.lastTime = Date.now();
         this.interval = setInterval(function() {
             _this.tick();
-        }, 18);
+        }, this.tickElapse);
     },
 
     pause() {
