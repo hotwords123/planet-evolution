@@ -16,6 +16,13 @@ class Pos {
     plus_eq(b) {
         this.x += b.x; this.y += b.y;
     }
+    minus(b) {
+        if (b instanceof Vector) {
+            return new Pos(this.x - b.x, this.y - b.y);
+        } else {
+            return new Vector(this.x - b.x, this.y - b.y);
+        }
+    }
 }
 
 class Vector {

@@ -5,11 +5,13 @@ var UI = Object.assign(new EventEmitter(), {
     $header: $('.toolbar-header'),
     $canvas: $('.renderer'),
 
-    mouseX: null,
-    mouseY: null,
+    mousePos: null,
     mouseClick: false,
     mouseMoved: false,
     mouseButton: null,
+
+    worldPos: null,
+    deltaPos: null,
 
     accelerateTimer: null,
 
@@ -47,7 +49,7 @@ var UI = Object.assign(new EventEmitter(), {
             y += planet.y * planet.mass;
         });
         var C = new Pos(x / mass, y / mass);
-        var vec = new Vector(C, new Pos(this.worldX, this.worldY));
+        var vec = new Vector(C, new Pos(this.worldPos.x, this.worldPos.y));
         var dv = vec.unit.multiply(vec.length * rate);
         this.selectedPlanets.forEach(function(planet) {
             planet.v.plus_eq(dv);
@@ -86,9 +88,25 @@ var UI = Object.assign(new EventEmitter(), {
         this.debug = !this.debug;
     },
 
+    calcMouse(e, move) {
+        var oldPos = null;
+        if (this.mousePos) {
+            oldPos = renderer.toWorldPos(this.mousePos);
+        }
+        this.mousePos = new Pos(e.clientX, e.clientY);
+        this.worldPos = renderer.toWorldPos(this.mousePos);
+        if (move) {
+            if (oldPos) {
+                this.deltaPos = this.worldPos.minus(oldPos);
+            } else {
+                this.deltaPos = new Vector(0, 0);
+            }
+        }
+    },
+
     registerEvents() {
         this.on('mousedown', function(e) {
-            var x = this.worldX, y = this.worldY;
+            var x = this.worldPos.x, y = this.worldPos.y;
             this.activePlanet = null;
             this.planetAdded = false;
             if (e.button === 0) {
@@ -114,7 +132,7 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('mouseup', function(e) {
-            var x = this.worldX, y = this.worldY;
+            var x = this.worldPos.x, y = this.worldPos.y;
             if (e.button === 0) {
                 if (!this.mouseMoved) {
                     var planet = this.activePlanet;
@@ -145,8 +163,8 @@ var UI = Object.assign(new EventEmitter(), {
             this.activePlanet = null;
         });
         this.on('mousemove', function() {
-            var x = this.worldX, y = this.worldY;
-            var deltaX = this.deltaX, deltaY = this.deltaY;
+            var x = this.worldPos.x, y = this.worldPos.y;
+            var deltaX = this.deltaPos.x, deltaY = this.deltaPos.y;
             var planet = Simulator.planetFromPos(x, y);
             if (planet) {
                 this.hoveredPlanet = planet;
@@ -155,8 +173,8 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('mousedrag', function() {
-            var x = this.worldX, y = this.worldY;
-            var deltaX = this.deltaX, deltaY = this.deltaY;
+            var x = this.worldPos.x, y = this.worldPos.y;
+            var deltaX = this.deltaPos.x, deltaY = this.deltaPos.y;
             if (this.mouseButton === 'l') {
                 if (this.activePlanet) {
                     this.selectedPlanets.forEach(function(planet) {
@@ -164,7 +182,7 @@ var UI = Object.assign(new EventEmitter(), {
                         planet.y += deltaY;
                     });
                 } else {
-                    renderer.moveCamera(deltaX, deltaY);
+                    renderer.moveCamera(-deltaX, -deltaY);
                 }
             } else {
                 //
@@ -192,11 +210,11 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('keydown_13', function(e) { // Enter
-            if (this.worldX === null || this.worldY === null) return;
+            if (this.worldPos.x === null || this.worldPos.y === null) return;
             var mass = Math.random() * 48 + 2;
             Simulator.addPlanet({
-                x: this.worldX,
-                y: this.worldY,
+                x: this.worldPos.x,
+                y: this.worldPos.y,
                 m: mass,
                 r: Simulator.calcRadius(mass),
                 v: new Vector(Math.random() * 10 - 5, Math.random() * 10 - 5)
@@ -281,21 +299,6 @@ var UI = Object.assign(new EventEmitter(), {
             }
             this.modifyPlanetSize(-rate);
         });
-    },
-
-    calcMouse(e, move) {
-        if (move) {
-            if (this.mouseX === null || this.mouseY === null) {
-                this.deltaX = 0; this.deltaY = 0;
-            } else {
-                this.deltaX = e.clientX - this.mouseX;
-                this.deltaY = e.clientY - this.mouseY;
-            }
-        }
-        this.mouseX = e.clientX;
-        this.mouseY = e.clientY;
-        this.worldX = this.mouseX - renderer.cameraX;
-        this.worldY = this.mouseY - renderer.cameraY;
     },
 
     addListeners() {

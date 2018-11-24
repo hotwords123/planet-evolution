@@ -13,8 +13,8 @@ class Renderer extends EventEmitter {
         this.width = 0;
         this.height = 0;
 
-        this.cameraX = 0;
-        this.cameraY = 0;
+        this.offsetX = 0;
+        this.offsetY = 0;
         
         this.registerEvents();
         this.addListeners();
@@ -22,13 +22,27 @@ class Renderer extends EventEmitter {
         this.emit('resize');
     }
 
+    toWorldPos(pos) {
+        return new Pos(
+            pos.x + this.offsetX,
+            pos.y + this.offsetY
+        );
+    }
+
+    fromWorldPos(pos) {
+        return new Pos(
+            pos.x - this.offsetX,
+            pos.y - this.offsetY
+        );
+    }
+
     moveCamera(x, y) {
-        this.cameraX += x;
-        this.cameraY += y;
+        this.offsetX += x;
+        this.offsetY += y;
     }
 
     get centerPos() {
-        return new Pos(-this.cameraX + this.width / 2, -this.cameraY + this.height / 2);
+        return new Pos(this.offsetX + this.width / 2, this.offsetY + this.height / 2);
     }
 
     renderTimer() {
@@ -43,7 +57,7 @@ class Renderer extends EventEmitter {
         var ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
         ctx.save();
-        ctx.translate(this.cameraX, this.cameraY);
+        ctx.translate(-this.offsetX, -this.offsetY);
 
         Simulator.watchedPlanetsOrbit.forEach(function(arr) {
             ctx.lineWidth = 1;
