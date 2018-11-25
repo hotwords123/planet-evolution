@@ -328,11 +328,11 @@ var UI = Object.assign(new EventEmitter(), {
         });
         this.$canvas.mousemove(function(evt) {
             var e = window.event || evt;
-            var oldX = UI.mouseX, oldY = UI.mouseY;
+            var old = UI.mousePos;
             UI.calcMouse(e, true);
             if (UI.mouseClick) {
                 e.preventDefault();
-                if (UI.mouseX !== oldX || UI.mouseY !== oldY) {
+                if (!UI.mousePos.equal(old)) {
                     UI.mouseMoved = true;
                 }
                 UI.emit('mousedrag', e);

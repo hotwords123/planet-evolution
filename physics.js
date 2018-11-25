@@ -4,6 +4,9 @@ class Pos {
         this.x = x;
         this.y = y;
     }
+    equal(b) {
+        return Math.abs(this.x - b.x) < 1e-8 && Math.abs(this.y - b.y) < 1e-8;
+    }
     copy() {
         return new Pos(this.x, this.y);
     }
