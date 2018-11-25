@@ -202,15 +202,9 @@ var UI = Object.assign(new EventEmitter(), {
             this.togglePaused();
         });
         this.on('keydown_46', function(e) { // Delete
-            if (this.hoveredPlanet) {
-                Simulator.removePlanet(this.hoveredPlanet);
-                this.hoveredPlanet = null;
-            } else if (this.selectedPlanets.length) {
-                var arr = this.selectedPlanets.slice(0);
-                arr.forEach(function(planet) {
-                    Simulator.removePlanet(planet);
-                });
-            }
+            this.activePlanets().forEach(function(planet) {
+                Simulator.removePlanet(planet);
+            });
         });
         this.on('keydown_13', function(e) { // Enter
             if (this.worldPos.x === null || this.worldPos.y === null) return;
