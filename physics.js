@@ -63,6 +63,9 @@ class Vector {
     minus(b) {
         return new Vector(this.x - b.x, this.y - b.y);
     }
+    minus_eq(b) {
+        this.x -= b.x; this.y -= b.y;
+    }
     multiply(b) {
         return new Vector(this.x * b, this.y * b);
     }

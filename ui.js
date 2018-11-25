@@ -244,9 +244,24 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('keydown_83', function(e) { // S
-            this.activePlanets().forEach(function(planet) {
-                planet.v.clear();
-            });
+            var arr = this.activePlanets();
+            if (!arr.length) return;
+            if (e.shiftKey) {
+                var mass = 0;
+                var p = new Vector(0, 0);
+                arr.forEach(function(planet) {
+                    mass += planet.mass;
+                    p.plus_eq(planet.v.multiply(planet.mass));
+                });
+                var v_c = p.divide(mass);
+                arr.forEach(function(planet) {
+                    planet.v.minus_eq(v_c);
+                });
+            } else {
+                arr.forEach(function(planet) {
+                    planet.v.clear();
+                });
+            }
         });
         this.on('keydown_87', function(e) { // W
             var planets = this.activePlanets();
