@@ -44,8 +44,13 @@ var Simulator = {
     },
 
     cleanupPlanet(planet) {
+        var index;
         if (planet === UI.hoveredPlanet) {
             UI.hoveredPlanet = null;
+        }
+        if (planet === UI.activePlanet) {
+            UI.activePlanet = null;
+            UI.planetAdded = true;
         }
         index = UI.selectedPlanets.indexOf(planet);
         if (index !== -1) {
