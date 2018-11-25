@@ -176,18 +176,29 @@ var Simulator = {
 
     processCollision() {
         var arr = this.planets;
-        var A, B, C, vec;
+        var A, B, C, lockedA, lockedB, vec;
         for (var i = 1; i < arr.length; ++i) {
             A = arr[i];
             for (var j = 0; j < i; ++j) {
                 B = arr[j];
                 vec = new Vector(A.pos, B.pos);
                 if (vec.length2 < Math.pow(A.r + B.r, 2)) {
+                    lockedA = this.isLocked(A);
+                    lockedB = this.isLocked(B);
                     C = this.mergePlanet(A, B);
                     this.bombPlanet(A, B, C);
                     this.cleanupPlanet(A);
                     this.cleanupPlanet(B);
                     arr[j] = C;
+                    if (lockedA || lockedB) {
+                        this.setLocked(C, true);
+                        if (lockedA && !lockedB) {
+                            C.pos = A.pos;
+                        }
+                        if (lockedB && !lockedA) {
+                            C.pos = B.pos;
+                        }
+                    }
                     arr.splice(i, 1);
                     --i; break;
                 }
