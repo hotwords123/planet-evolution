@@ -19,6 +19,10 @@ var Simulator = {
 
     particles: [],
 
+    referencePlanets: null,
+    referencePlanetsPos: null,
+    changeReferenceSystem: false,
+
     addPlanet(obj) {
         this.planets.push(new Planet(obj.x, obj.y, obj.r, obj.m, obj.v));
     },
@@ -50,7 +54,7 @@ var Simulator = {
         }
         if (planet === UI.activePlanet) {
             UI.activePlanet = null;
-            UI.planetAdded = true;
+            UI.planetAdded = false;
         }
         index = UI.selectedPlanets.indexOf(planet);
         if (index !== -1) {
@@ -65,6 +69,11 @@ var Simulator = {
             this.watchedPlanets.splice(index, 1);
             this.watchedPlanetsOrbit.splice(index, 1);
         }
+        index = this.referencePlanets.indexOf(planet);
+        if (index !== -1) {
+            this.referencePlanets = null;
+            this.referencePlanetsPos = null;
+        }
     },
 
     clearPlanets() {
@@ -72,10 +81,12 @@ var Simulator = {
         UI.hoveredPlanet = null;
         UI.selectedPlanets = [];
         UI.activePlanet = null;
-        UI.planetAdded = true;
+        UI.planetAdded = false;
         this.lockedPlanets = [];
         this.watchedPlanets = [];
         this.watchedPlanetsOrbit = [];
+        this.referencePlanets = null;
+        this.referencePlanetsPos = null;
     },
 
     isLocked(planet) {
@@ -134,8 +145,30 @@ var Simulator = {
         }
     },
 
+    setReferencePlanets(planets, flag) {
+        if (!planets || !planets.length) {
+            this.referencePlanets = null;
+            this.referencePlanetsPos = null;
+            this.changeReferenceSystem = false;
+        } else {
+            this.referencePlanets = planets.slice(0);
+            this.referencePlanetsPos = this.calcMassCenter(this.referencePlanets);
+            this.changeReferenceSystem = !!flag;
+        }
+    },
+
     calcRadius(mass) {
         return 3 + Math.pow(mass, 0.5) * 0.7;
+    },
+
+    calcMassCenter(planets) {
+        var mass = 0, x = 0, y = 0;
+        planets.forEach(function(planet) {
+            mass += planet.mass;
+            x += planet.mass * planet.x;
+            y += planet.mass * planet.y;
+        });
+        return new Pos(x / mass, y / mass);
     },
 
     mergePlanet(A, B) {
@@ -273,27 +306,40 @@ var Simulator = {
     },
 
     tick() {
-        var timePassed = 0.001 * (Date.now() - this.lastTime);
+        var timePassed = 0.001 * Math.min(4 * this.tickElapse, (Date.now() - this.lastTime));
         this.lastTime = Date.now();
-        timePassed = Math.min(timePassed, 0.05);
         var worldTime = timePassed * 10;
+
         if (UI.mouseClick && UI.activePlanet) return;
         if (!this.planets.length) return;
+
         if (this.planets.length !== this.lastPlanetsCount) {
             this.simulateCount = this.getBaseSimulateCount(this.planets.length);
             this.lastPlanetsCount = this.planets.length;
         }
-        var count = Math.round(this.simulateCount * this.simulateCountScale);
-        count = Math.max(count, 64);
+
+        var count = Math.max(64, Math.round(this.simulateCount * this.simulateCountScale));
         var elapse = worldTime / count;
+
         var startTime = Date.now();
+
         while (count--) {
             this.processCollision();
             this.simulate(elapse);
         }
+
         this.removeEscapingPlanets();
-        this.updatePlanetsOrbit();
         this.updateParticles(worldTime);
+
+        if (this.referencePlanets) {
+            var oldPos = this.referencePlanetsPos;
+            this.referencePlanetsPos = this.calcMassCenter(this.referencePlanets);
+            var vec = new Vector(oldPos, this.referencePlanetsPos);
+            renderer.moveCamera(vec.x, vec.y);
+        }
+
+        this.updatePlanetsOrbit();
+
         var timeUsed = Date.now() - startTime;
         var minTime = this.tickElapse * 0.2;
         var maxTime = this.tickElapse * 0.8;

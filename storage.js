@@ -32,6 +32,16 @@ var StorageManager = {
         data.planets.orbit = Simulator.watchedPlanetsOrbit.map(function(orbit) {
             return orbit.toJSON();
         });
+        if (Simulator.referencePlanets) {
+            data.reference = {};
+            data.reference.indexes = Simulator.referencePlanets.map(function(planet) {
+                return Simulator.planets.indexOf(planet);
+            });
+            data.reference.pos = Simulator.referencePlanetsPos.toJSON();
+            data.reference.changeReferenceSystem = Simulator.changeReferenceSystem;
+        } else {
+            data.reference = null;
+        }
 
         data.particles = Simulator.particles.map(function(particle) {
             return particle.toJSON();
@@ -89,6 +99,13 @@ var StorageManager = {
         Simulator.watchedPlanetsOrbit = data.planets.orbit.map(function(o) {
             return PlanetOrbit.fromJSON(o);
         });
+        if (data.reference) {
+            Simulator.referencePlanets = data.reference.indexes.map(function(i) {
+                return Simulator.planets[i];
+            });
+            Simulator.referencePlanetsPos = Pos.fromJSON(data.reference.pos);
+            Simulator.changeReferenceSystem = data.reference.changeReferenceSystem;
+        }
 
         Simulator.particles = data.particles.map(function(o) {
             return Particle.fromJSON(o);

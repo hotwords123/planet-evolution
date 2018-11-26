@@ -46,13 +46,7 @@ var UI = Object.assign(new EventEmitter(), {
     },
 
     accelerate(rate) {
-        var mass = 0, x = 0, y = 0;
-        this.selectedPlanets.forEach(function(planet) {
-            mass += planet.mass;
-            x += planet.x * planet.mass;
-            y += planet.y * planet.mass;
-        });
-        var C = new Pos(x / mass, y / mass);
+        var C = Simulator.calcMassCenter(this.selectedPlanets);
         var vec = new Vector(C, new Pos(this.worldPos.x, this.worldPos.y));
         var dv = vec.unit.multiply(vec.length * rate);
         this.selectedPlanets.forEach(function(planet) {
@@ -312,6 +306,9 @@ var UI = Object.assign(new EventEmitter(), {
                     }
                 });
             }
+        });
+        this.on('keydown_82', function(e) { // R
+            Simulator.setReferencePlanets(this.activePlanets(), e.shiftKey);
         });
         this.on('keydown_38', function(e) { // Arrow-Up
             var rate = 1;
