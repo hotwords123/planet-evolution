@@ -1,6 +1,9 @@
 
 var UI = Object.assign(new EventEmitter(), {
 
+    ACCELERATE_ELAPSE: 15,
+    AUTO_SAVE_ELAPSE: 2000,
+
     $toolbar: $('.toolbar'),
     $header: $('.toolbar-header'),
     $canvas: $('.renderer'),
@@ -14,10 +17,11 @@ var UI = Object.assign(new EventEmitter(), {
     deltaPos: null,
 
     accelerateTimer: null,
-
-    debug: false,
+    autoSaveTimer: null,
 
     paused: false,
+    debug: false,
+    autoSave: false,
 
     hoveredPlanet: null,
     activePlanet: null,
@@ -75,6 +79,7 @@ var UI = Object.assign(new EventEmitter(), {
             $('.btn-pause').text("Resume");
         }
         this.paused = !this.paused;
+        StorageManager.saveOptions();
     },
 
     toggleDebug() {
@@ -86,6 +91,22 @@ var UI = Object.assign(new EventEmitter(), {
             $('.info.debug').show();
         }
         this.debug = !this.debug;
+        StorageManager.saveOptions();
+    },
+
+    toggleAutoSave() {
+        if (this.autoSave) {
+            $('.btn-autosave').removeClass('invert');
+            clearInterval(this.autoSaveTimer);
+            this.autoSaveTimer = null;
+        } else {
+            $('.btn-autosave').addClass('invert');
+            this.autoSaveTimer = setInterval(function() {
+                StorageManager.save();
+            }, this.AUTO_SAVE_ELAPSE);
+        }
+        this.autoSave = !this.autoSave;
+        StorageManager.saveOptions();
     },
 
     calcMouse(e, move) {
@@ -127,7 +148,7 @@ var UI = Object.assign(new EventEmitter(), {
                     this.accelerate(0.0001);
                     this.accelerateTimer = setInterval(function() {
                         UI.accelerate(0.0005);
-                    }, 15);
+                    }, UI.ACCELERATE_ELAPSE);
                 }
             }
         });
@@ -280,15 +301,14 @@ var UI = Object.assign(new EventEmitter(), {
         this.on('keydown_67', function(e) { // C
             var planets = this.activePlanets();
             if (!planets.length) {
-                var arr = Simulator.watchedPlanetsOrbit;
-                for (var i = 0; i < arr.length; ++i) {
-                    arr[i] = [];
-                }
+                Simulator.watchedPlanetsOrbit.forEach(function(orbit) {
+                    orbit.clear();
+                });
             } else {
                 planets.forEach(function(planet) {
                     var index = Simulator.watchedPlanets.indexOf(planet);
                     if (index !== -1) {
-                        Simulator.watchedPlanetsOrbit[index] = [];
+                        Simulator.watchedPlanetsOrbit[index].clear();
                     }
                 });
             }
@@ -367,6 +387,42 @@ var UI = Object.assign(new EventEmitter(), {
         });
         $('.btn-debug').click(function() {
             UI.toggleDebug();
+        });
+
+        $('.btn-save').click(function() {
+            StorageManager.save();
+        });
+        $('.btn-export').click(function() {
+            var data = JSON.stringify(StorageManager.makeSaveData());
+            var blob = new Blob([ data ], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var $a = $('<a>');
+            $a.prop('href', url).prop('download', 'planets-save.json');
+            $('body').append($a);
+            $a.get(0).click();
+            $a.remove();
+            URL.revokeObjectURL(url);
+        });
+        $('.btn-import').click(function() {
+            var $input = $('<input type="file">');
+            $input.on('input', function() {
+                if (!this.files.length) return;
+                var blob = this.files[0];
+                var reader = new FileReader();
+                reader.onload = function() {
+                    try {
+                        var data = JSON.parse(reader.result);
+                        StorageManager.load(data);
+                    } catch (err) {
+                        alert("Failed to load save.");
+                    }
+                };
+                reader.readAsText(blob);
+            });
+            $input.get(0).click();
+        });
+        $('.btn-autosave').click(function() {
+            UI.toggleAutoSave();
         });
 
         $(window).keydown(function(e) {

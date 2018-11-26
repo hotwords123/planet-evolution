@@ -73,15 +73,15 @@ class Renderer extends EventEmitter {
         ctx.scale(this.scale, this.scale);
         ctx.translate(-this.offsetX, -this.offsetY);
 
-        Simulator.watchedPlanetsOrbit.forEach(function(arr) {
+        Simulator.watchedPlanetsOrbit.forEach(function(orbit) {
             ctx.lineWidth = 1;
             ctx.strokeStyle = '#9df';
             ctx.shadowBlur = 0;
-            if (!arr.length) return;
+            if (!orbit.length) return;
             ctx.beginPath();
-            ctx.moveTo(arr[0].x, arr[0].y);
-            for (var i = 1; i < arr.length; ++i) {
-                ctx.lineTo(arr[i].x, arr[i].y);
+            ctx.moveTo(orbit.arr[0].x, orbit.arr[0].y);
+            for (var i = 1; i < orbit.length; ++i) {
+                ctx.lineTo(orbit.arr[i].x, orbit.arr[i].y);
             }
             ctx.stroke();
         });

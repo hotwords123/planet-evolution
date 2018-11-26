@@ -4,6 +4,14 @@ class Pos {
         this.x = x;
         this.y = y;
     }
+    toJSON() {
+        return {
+            x: this.x, y: this.y
+        };
+    }
+    static fromJSON(o) {
+        return new Pos(o.x, o.y);
+    }
     equal(b) {
         return Math.abs(this.x - b.x) < 1e-8 && Math.abs(this.y - b.y) < 1e-8;
     }
@@ -37,6 +45,14 @@ class Vector {
             this.x = x;
             this.y = y;
         }
+    }
+    toJSON() {
+        return {
+            x: this.x, y: this.y
+        };
+    }
+    static fromJSON(o) {
+        return new Vector(o.x, o.y);
     }
     copy() {
         return new Vector(this.x, this.y);

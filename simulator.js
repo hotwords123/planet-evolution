@@ -67,7 +67,7 @@ var Simulator = {
         }
     },
 
-    clearPlanets(obj) {
+    clearPlanets() {
         this.planets = [];
         UI.hoveredPlanet = null;
         UI.selectedPlanets = [];
@@ -113,7 +113,7 @@ var Simulator = {
         if (index === -1) {
             if (flag) {
                 this.watchedPlanets.push(planet);
-                this.watchedPlanetsOrbit.push([]);
+                this.watchedPlanetsOrbit.push(new PlanetOrbit());
             }
         } else {
             if (!flag) {
@@ -127,7 +127,7 @@ var Simulator = {
         var index = this.watchedPlanets.indexOf(planet);
         if (index === -1) {
             this.watchedPlanets.push(planet);
-            this.watchedPlanetsOrbit.push([]);
+            this.watchedPlanetsOrbit.push(new PlanetOrbit());
         } else {
             this.watchedPlanets.splice(index, 1);
             this.watchedPlanetsOrbit.splice(index, 1);
@@ -247,11 +247,7 @@ var Simulator = {
 
     updatePlanetsOrbit() {
         this.watchedPlanets.forEach(function(planet, index) {
-            var arr = this.watchedPlanetsOrbit[index];
-            if (!arr.length || new Vector(arr[arr.length - 1], planet.pos).length > 2) {
-                arr.push(planet.pos.copy());
-                if (arr.length > 2000) arr.shift();
-            }
+            this.watchedPlanetsOrbit[index].update(planet.pos);
         }, this);
     },
 

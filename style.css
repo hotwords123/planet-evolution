@@ -6,7 +6,7 @@
 
 span.button {
     display: inline-block;
-    margin: 2px 6px;
+    margin: 2px 4px;
     padding: 4px 8px;
     border: 1px solid #999;
     border-radius: 3px;
@@ -70,7 +70,7 @@ canvas.renderer {
     z-index: 10000;
 }
 
-.toolbar .header {
+.toolbar .header div {
     margin-bottom: 4px;
 }
 
