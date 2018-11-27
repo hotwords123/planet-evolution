@@ -247,7 +247,7 @@ var Simulator = {
                 if (vec.length2 < Math.pow(A.r + B.r, 2)) {
                     lockedA = this.isLocked(A);
                     lockedB = this.isLocked(B);
-                    selected = UI.isSelected(A) && UI.isSelected(B);
+                    selected = UI.isSelected(A) || UI.isSelected(B);
                     watched = this.isWatched(A) || this.isWatched(B);
                     C = this.mergePlanet(A, B);
                     this.bombPlanet(A, B, C);
