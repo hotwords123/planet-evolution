@@ -34,6 +34,9 @@ class Pos {
             return new Vector(this.x - b.x, this.y - b.y);
         }
     }
+    minus_eq(b) {
+        this.x -= b.x; this.y -= b.y;
+    }
 }
 
 class Vector {

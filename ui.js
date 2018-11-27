@@ -308,7 +308,8 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('keydown_82', function(e) { // R
-            Simulator.setReferencePlanets(this.activePlanets(), e.shiftKey);
+            var flag = !!e.shiftKey;
+            Simulator.setReferencePlanets(this.activePlanets(), flag);
         });
         this.on('keydown_38', function(e) { // Arrow-Up
             var rate = 1;

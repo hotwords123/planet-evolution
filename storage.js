@@ -1,7 +1,7 @@
 
 var StorageManager = {
 
-    VERSION: '1.0',
+    VERSION: '1.1',
     STORAGE_KEY_SAVE: 'planet_evolution_save',
     STORAGE_KEY_OPTIONS: 'planet_evolution_options',
 
@@ -69,12 +69,23 @@ var StorageManager = {
 
     load(data) {
         if (data.version !== this.VERSION) {
-            if (!confirm([
-                "The version of the save does not match the current version.",
-                "It may not work properly.",
-                "Continue to load anyway?"
-            ].join('\n'))) {
-                return;
+            switch (data.version) {
+                case '1.0': {
+                    var arr = data.planets.orbit;
+                    for (var i = 0; i < arr.length; ++i) {
+                        arr[i] = new PlanetOrbit().toJSON();
+                    }
+                    break;
+                }
+                default: {
+                    if (!confirm([
+                        "The version of the save does not match the current version.",
+                        "It may not work properly.",
+                        "Continue to load anyway?"
+                    ].join('\n'))) {
+                        return;
+                    }
+                }
             }
         }
 

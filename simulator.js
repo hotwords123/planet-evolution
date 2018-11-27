@@ -69,10 +69,12 @@ var Simulator = {
             this.watchedPlanets.splice(index, 1);
             this.watchedPlanetsOrbit.splice(index, 1);
         }
-        index = this.referencePlanets.indexOf(planet);
-        if (index !== -1) {
-            this.referencePlanets = null;
-            this.referencePlanetsPos = null;
+        if (this.referencePlanets) {
+            index = this.referencePlanets.indexOf(planet);
+            if (index !== -1) {
+                this.referencePlanets = null;
+                this.referencePlanetsPos = null;
+            }
         }
     },
 
@@ -149,12 +151,38 @@ var Simulator = {
         if (!planets || !planets.length) {
             this.referencePlanets = null;
             this.referencePlanetsPos = null;
-            this.changeReferenceSystem = false;
+            flag = false;
         } else {
             this.referencePlanets = planets.slice(0);
             this.referencePlanetsPos = this.calcMassCenter(this.referencePlanets);
-            this.changeReferenceSystem = !!flag;
         }
+        if (flag || this.changeReferenceSystem) {
+            this.watchedPlanetsOrbit.forEach(function(orbit) {
+                orbit.clear();
+            });
+        }
+        this.changeReferenceSystem = !!flag;
+    },
+
+    getReferenceInfo() {
+        if (!this.referencePlanets || !this.changeReferenceSystem) {
+            return {
+                v: new Vector(0, 0),
+                a: new Vector(0, 0)
+            };
+        }
+        var mass = 0,
+            mv = new Vector(0, 0),
+            ma = new Vector(0, 0);
+        this.referencePlanets.forEach(function(planet) {
+            mass += planet.mass;
+            mv.plus_eq(planet.v.multiply(planet.mass));
+            ma.plus_eq(planet.a.multiply(planet.mass));
+        });
+        return {
+            v: mv.divide(mass),
+            a: ma.divide(mass)
+        };
     },
 
     calcRadius(mass) {
@@ -278,9 +306,9 @@ var Simulator = {
         }
     },
 
-    updatePlanetsOrbit() {
+    updatePlanetsOrbit(vec) {
         this.watchedPlanets.forEach(function(planet, index) {
-            this.watchedPlanetsOrbit[index].update(planet.pos);
+            this.watchedPlanetsOrbit[index].update(planet.pos, vec);
         }, this);
     },
 
@@ -331,14 +359,17 @@ var Simulator = {
         this.removeEscapingPlanets();
         this.updateParticles(worldTime);
 
+        var refVec = new Vector(0, 0);
         if (this.referencePlanets) {
             var oldPos = this.referencePlanetsPos;
             this.referencePlanetsPos = this.calcMassCenter(this.referencePlanets);
             var vec = new Vector(oldPos, this.referencePlanetsPos);
             renderer.moveCamera(vec.x, vec.y);
+            if (this.changeReferenceSystem) {
+                refVec = vec.copy();
+            }
         }
-
-        this.updatePlanetsOrbit();
+        this.updatePlanetsOrbit(refVec);
 
         var timeUsed = Date.now() - startTime;
         var minTime = this.tickElapse * 0.2;

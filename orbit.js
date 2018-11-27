@@ -1,39 +1,48 @@
 
 class PlanetOrbit {
-    constructor(arr) {
-        if (arr) {
-            this.arr = arr.map(function(pos) {
-                return pos.copy();
-            });
-        } else {
-            this.arr = [];
-        }
+    constructor() {
+        this.delta = [];
+        this.last = null;
     }
     toJSON() {
-        return this.arr.map(function(pos) {
-            return pos.toJSON();
-        });
+        return {
+            delta: this.delta.map(function(vec) {
+                return vec.toJSON();
+            }),
+            last: this.last ? this.last.toJSON() : null
+        };
     }
     static fromJSON(o) {
-        return new PlanetOrbit(o.map(function(p) {
-            return Pos.fromJSON(p);
-        }));
+        var a = new PlanetOrbit();
+        a.delta = o.delta.map(function(b) {
+            return Vector.fromJSON(b);
+        });
+        a.last = o.last ? Pos.fromJSON(o.last) : null;
+        return a;
     }
-    get length() {
-        return this.arr.length;
-    }
-    get last() {
-        return this.arr[this.length - 1];
-    }
-    update(pos, force) {
-        if (force || !this.arr.length || new Vector(this.last, pos).length > 2) {
-            this.arr.push(pos.copy());
-            if (this.arr.length > 2000) {
-                this.arr.shift();
+    update(pos, vec) {
+        if (!this.last) {
+            this.delta = [];
+        } else {
+            var v = new Vector(this.last, pos).minus(vec);
+            if (!this.delta.length) {
+                this.delta.push(v);
+            } else {
+                var v2 = this.delta[this.delta.length - 1].plus(v);
+                if (v2.length > 2) {
+                    this.delta.push(v);
+                    if (this.delta.length > 2000) {
+                        this.delta.shift();
+                    }
+                } else {
+                    this.delta[this.delta.length - 1] = v2;
+                }
             }
         }
+        this.last = pos.copy();
     }
     clear() {
-        this.arr = [];
+        this.delta = [];
+        this.last = null;
     }
 }
