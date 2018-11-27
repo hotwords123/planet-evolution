@@ -140,9 +140,11 @@ var UI = Object.assign(new EventEmitter(), {
             } else {
                 if (this.selectedPlanets.length) {
                     this.accelerate(0.0001);
-                    this.accelerateTimer = setInterval(function() {
-                        UI.accelerate(0.0005);
-                    }, UI.ACCELERATE_ELAPSE);
+                    if (!this.accelerateTimer) {
+                        this.accelerateTimer = setInterval(function() {
+                            UI.accelerate(0.0005);
+                        }, UI.ACCELERATE_ELAPSE);
+                    }
                 }
             }
         });
