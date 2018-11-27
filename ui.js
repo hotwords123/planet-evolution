@@ -224,12 +224,14 @@ var UI = Object.assign(new EventEmitter(), {
         this.on('keydown_13', function(e) { // Enter
             if (this.worldPos.x === null || this.worldPos.y === null) return;
             var mass = Math.random() * 48 + 2;
+            var v = new Vector(Math.random() * 10 - 5, Math.random() * 10 - 5);
+            v.plus_eq(Simulator.getReferenceInfo().v);
             Simulator.addPlanet({
                 x: this.worldPos.x,
                 y: this.worldPos.y,
                 m: mass,
                 r: Simulator.calcRadius(mass),
-                v: new Vector(Math.random() * 10 - 5, Math.random() * 10 - 5)
+                v: v
             });
         });
         this.on('keydown_27', function(e) { // Esc
@@ -259,23 +261,29 @@ var UI = Object.assign(new EventEmitter(), {
             }
         });
         this.on('keydown_83', function(e) { // S
-            var arr = this.activePlanets();
-            if (!arr.length) return;
-            if (e.shiftKey) {
-                var mass = 0;
-                var p = new Vector(0, 0);
-                arr.forEach(function(planet) {
-                    mass += planet.mass;
-                    p.plus_eq(planet.v.multiply(planet.mass));
-                });
-                var v_c = p.divide(mass);
-                arr.forEach(function(planet) {
-                    planet.v.minus_eq(v_c);
-                });
+            if (e.ctrlKey) {
+                e.preventDefault();
+                StorageManager.save();
             } else {
-                arr.forEach(function(planet) {
-                    planet.v.clear();
-                });
+                var arr = this.activePlanets();
+                if (!arr.length) return;
+                if (e.shiftKey) {
+                    var mass = 0;
+                    var p = new Vector(0, 0);
+                    arr.forEach(function(planet) {
+                        mass += planet.mass;
+                        p.plus_eq(planet.v.multiply(planet.mass));
+                    });
+                    var v_c = p.divide(mass).minus(Simulator.getReferenceInfo().v);
+                    arr.forEach(function(planet) {
+                        planet.v.minus_eq(v_c);
+                    });
+                } else {
+                    var v_r = Simulator.getReferenceInfo().v;
+                    arr.forEach(function(planet) {
+                        planet.v = v_r.copy();
+                    });
+                }
             }
         });
         this.on('keydown_87', function(e) { // W
