@@ -31,7 +31,7 @@ class PlanetOrbit {
                 var v2 = this.delta[this.delta.length - 1].plus(v);
                 if (v2.length > 2) {
                     this.delta.push(v);
-                    if (this.delta.length > 2000) {
+                    if (this.delta.length > 5000) {
                         this.delta.shift();
                     }
                 } else {

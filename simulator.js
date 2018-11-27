@@ -72,8 +72,7 @@ var Simulator = {
         if (this.referencePlanets) {
             index = this.referencePlanets.indexOf(planet);
             if (index !== -1) {
-                this.referencePlanets = null;
-                this.referencePlanetsPos = null;
+                this.setReferencePlanets(null, false);
             }
         }
     },
@@ -87,8 +86,7 @@ var Simulator = {
         this.lockedPlanets = [];
         this.watchedPlanets = [];
         this.watchedPlanetsOrbit = [];
-        this.referencePlanets = null;
-        this.referencePlanetsPos = null;
+        this.setReferencePlanets(null, false);
     },
 
     isLocked(planet) {
