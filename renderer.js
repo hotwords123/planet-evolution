@@ -156,6 +156,45 @@ class Renderer extends EventEmitter {
             }
         });
 
+        if (UI.debug && UI.selectedPlanets.length > 1) {
+
+            var mass = 0,
+                x = 0, y = 0,
+                mv = new Vector(0, 0),
+                ma = new Vector(0, 0);
+            
+            UI.selectedPlanets.forEach(function(planet) {
+                mass += planet.mass;
+                x += planet.mass * planet.x;
+                y += planet.mass * planet.y;
+                mv.plus_eq(planet.v.multiply(planet.mass));
+                ma.plus_eq(planet.a.multiply(planet.mass));
+            });
+
+            x /= mass; y /= mass;
+            var v_ = mv.divide(mass).minus(refInfo.v);
+            var a_ = ma.divide(mass).minus(refInfo.a);
+
+            ctx.fillStyle = '#ffffaa66';
+            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            ctx.arc(x, y, Simulator.calcRadius(mass), 0, 2 * Math.PI, false);
+            ctx.fill();
+
+            ctx.strokeStyle = '#0f0';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + v_.x * 3, y + v_.y * 3);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#09f';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + a_.x * 9, y + a_.y * 9);
+            ctx.stroke();
+        }
+
         Simulator.particles.forEach(function(particle) {
             ctx.lineWidth = 0;
             ctx.fillStyle = 'rgba(192, 192, 192, ' + particle.opacity + ')';
