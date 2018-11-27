@@ -372,7 +372,7 @@ var Simulator = {
         var timeUsed = Date.now() - startTime;
         var minTime = this.tickElapse * 0.2;
         var maxTime = this.tickElapse * 0.8;
-        if (timeUsed < minTime) {
+        if (timeUsed < minTime && this.simulateCountScale > 0.01) {
             this.simulateCountScale *= 2;
         } else if (timeUsed > maxTime) {
             this.simulateCountScale /= 2;
