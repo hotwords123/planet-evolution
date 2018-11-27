@@ -2,7 +2,7 @@
 var UI = Object.assign(new EventEmitter(), {
 
     ACCELERATE_ELAPSE: 15,
-    AUTO_SAVE_ELAPSE: 2000,
+    AUTO_SAVE_ELAPSE: 5000,
 
     $toolbar: $('.toolbar'),
     $header: $('.toolbar-header'),
@@ -390,6 +390,12 @@ var UI = Object.assign(new EventEmitter(), {
         $('.btn-save').click(function() {
             StorageManager.save();
         });
+        $('.btn-restore').click(function() {
+            StorageManager.restore();
+        });
+        $('.btn-autosave').click(function() {
+            UI.toggleAutoSave();
+        });
         $('.btn-export').click(function() {
             var data = JSON.stringify(StorageManager.makeSaveData());
             var blob = new Blob([ data ], { type: 'application/json' });
@@ -418,9 +424,6 @@ var UI = Object.assign(new EventEmitter(), {
                 reader.readAsText(blob);
             });
             $input.get(0).click();
-        });
-        $('.btn-autosave').click(function() {
-            UI.toggleAutoSave();
         });
 
         $(window).keydown(function(e) {

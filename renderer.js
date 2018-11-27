@@ -323,6 +323,11 @@ class Renderer extends EventEmitter {
                         'E<sub>p</sub>:', Ep.toFixed(4)
                     ].join(' ')
                 ]);
+                if (planets.length === 1) {
+                    var v_ = planets[0].v.minus(refInfo.v);
+                    var a_ = planets[0].a.minus(refInfo.a);
+                    info.line('radius: ' + (v_.length2 / a_.length).toFixed(4));
+                }
             }
 
             var planet = UI.hoveredPlanet;
@@ -359,8 +364,8 @@ class Renderer extends EventEmitter {
                         'a<sub>x</sub>:', a_.x.toFixed(4),
                         'a<sub>y</sub>:', a_.y.toFixed(4)
                     ].join(' '),
-                    'radius: ' + (v_.length2 / a_.length).toFixed(4),
-                    'E<sub>k</sub>: ' + Ek.toFixed(4)
+                    'E<sub>k</sub>: ' + Ek.toFixed(4),
+                    'radius: ' + (v_.length2 / a_.length).toFixed(4)
                 ]);
             }
 
