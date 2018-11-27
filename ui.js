@@ -321,6 +321,11 @@ var UI = Object.assign(new EventEmitter(), {
             var flag = !!e.shiftKey;
             Simulator.setReferencePlanets(this.activePlanets(), flag);
         });
+        this.on('keydown_48', function(e) { // 0
+            if (e.ctrlKey) {
+                renderer.scaleCamera(1 / renderer.scale, this.mousePos || renderer.screenCenterPos);
+            }
+        });
         this.on('keydown_38', function(e) { // Arrow-Up
             var rate = 1;
             if (e.ctrlKey) {
@@ -389,6 +394,9 @@ var UI = Object.assign(new EventEmitter(), {
 
         $('.btn-pause').click(function() {
             UI.togglePaused();
+        });
+        $('.btn-update').click(function() {
+            Simulator.simulate(0);
         });
         $('.btn-clear').click(function() {
             Simulator.clearPlanets();

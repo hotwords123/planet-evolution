@@ -277,6 +277,7 @@ var Simulator = {
     },
 
     simulate(t) {
+        this.processCollision();
         var A, B, F;
         var n = this.planets.length;
         for (var i = 0; i < n; ++i) {
@@ -361,7 +362,6 @@ var Simulator = {
         var startTime = Date.now();
 
         while (count--) {
-            this.processCollision();
             this.simulate(elapse);
         }
 
