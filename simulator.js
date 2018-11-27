@@ -235,7 +235,10 @@ var Simulator = {
 
     processCollision() {
         var arr = this.planets;
-        var A, B, C, lockedA, lockedB, vec;
+        var A, B, C, vec,
+            lockedA, lockedB,
+            selected,
+            watched;
         for (var i = 1; i < arr.length; ++i) {
             A = arr[i];
             for (var j = 0; j < i; ++j) {
@@ -244,6 +247,8 @@ var Simulator = {
                 if (vec.length2 < Math.pow(A.r + B.r, 2)) {
                     lockedA = this.isLocked(A);
                     lockedB = this.isLocked(B);
+                    selected = UI.isSelected(A) && UI.isSelected(B);
+                    watched = this.isWatched(A) || this.isWatched(B);
                     C = this.mergePlanet(A, B);
                     this.bombPlanet(A, B, C);
                     this.cleanupPlanet(A);
@@ -257,6 +262,12 @@ var Simulator = {
                         if (lockedB && !lockedA) {
                             C.pos = B.pos;
                         }
+                    }
+                    if (selected) {
+                        UI.selectedPlanets.push(C);
+                    }
+                    if (watched) {
+                        this.setWatched(C, true);
                     }
                     arr.splice(i, 1);
                     --i; break;
