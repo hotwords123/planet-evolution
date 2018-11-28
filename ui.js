@@ -406,10 +406,14 @@ var UI = Object.assign(new EventEmitter(), {
         });
 
         $('.btn-save').click(function() {
-            StorageManager.save();
+            if (!StorageManager.save()) {
+                alert('Failed to save data.');
+            }
         });
         $('.btn-restore').click(function() {
-            StorageManager.restore();
+            if (!StorageManager.restore()) {
+                alert('Failed to restore data.');
+            }
         });
         $('.btn-autosave').click(function() {
             UI.toggleAutoSave();
