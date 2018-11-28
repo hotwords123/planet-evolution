@@ -414,6 +414,9 @@ var UI = Object.assign(new EventEmitter(), {
         $('.btn-autosave').click(function() {
             UI.toggleAutoSave();
         });
+        $('.btn-reset').click(function() {
+            StorageManager.reset();
+        });
         $('.btn-export').click(function() {
             var data = JSON.stringify(StorageManager.makeSaveData());
             var blob = new Blob([ data ], { type: 'application/json' });

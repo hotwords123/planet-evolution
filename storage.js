@@ -58,7 +58,7 @@ var StorageManager = {
         }
     },
 
-    cleanup() {
+    reset() {
         Simulator.clearPlanets();
         Simulator.particles = [];
         
@@ -89,7 +89,7 @@ var StorageManager = {
             }
         }
 
-        this.cleanup();
+        this.reset();
         
         renderer.offsetX = data.camera.x;
         renderer.offsetY = data.camera.y;
@@ -144,7 +144,7 @@ var StorageManager = {
             } catch (err) {
                 console.warn('Failed to restore data.');
                 console.error(err);
-                this.cleanup();
+                this.reset();
                 return false;
             }
         }
