@@ -349,6 +349,9 @@ var Simulator = {
         var worldTime = timePassed * 10;
 
         if (UI.mouseClick && UI.activePlanet) return;
+        
+        this.updateParticles(worldTime);
+
         if (!this.planets.length) return;
 
         if (this.planets.length !== this.lastPlanetsCount) {
@@ -366,7 +369,6 @@ var Simulator = {
         }
 
         this.removeEscapingPlanets();
-        this.updateParticles(worldTime);
 
         var refVec = new Vector(0, 0);
         if (this.referencePlanets) {
